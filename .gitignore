@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+Tests/.vs/
+Tests/x64/
+Tests/test_profile.csv
