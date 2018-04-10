@@ -8,7 +8,7 @@ Selecting a random item from a pre-defined array is typically done via randomly 
 Item GetRandomItem(const std::vector<Item>& items)
 {
   // Assumes at least one item - 
-  // Note: This is not a good way of gettng a random number in a range, but used for brevity. 
+  // Note: This is not a good way of getting a random number in a range, but used for brevity. 
   //  see https://www.youtube.com/watch?v=LDPMpc-ENqY 
   //  or http://c-faq.com/lib/randrange.html
   return items[rand() % items.size()];

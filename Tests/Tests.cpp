@@ -3,6 +3,8 @@
 #define USE_FAST_RAND
 #define USE_FAST_DISTRIBUTION
 
+// Use http://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
+
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -38,6 +40,45 @@ static std::ofstream s_csvFile;
 
 using namespace std;
 
+
+// Fast random from https://en.wikipedia.org/wiki/Xorshift
+static uint32_t s_rndState = 1234;
+inline uint32_t XorShift32()
+{
+  uint32_t x = s_rndState;
+  x ^= x << 13;
+  x ^= x >> 17;
+  x ^= x << 15;
+  s_rndState = x;
+  return x;
+}
+
+inline uint32_t RandRange(uint32_t i_max)
+{
+  return XorShift32() % (i_max + 1); // i_max cannot be uint32 limit
+}
+
+
+template<class T, class P>
+bool RandomSelect(const std::vector<T>& items, P test, T& returnItem)
+{
+  uint32_t matchingCount = 0;
+  for (const T& i : items)
+  {
+    // If matching the test
+    if (test(i))
+    {
+      // Check if selected
+      if (RandRange(matchingCount) == 0)
+      {
+        returnItem = i;
+      }
+      matchingCount++;
+    }
+  }
+
+  return matchingCount > 0;
+}
 
 int main()
 {
