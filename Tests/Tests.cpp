@@ -1,16 +1,13 @@
 
 // Adjust these defines to choose between accuracy and speed
-#define USE_FAST_RAND
-#define USE_FAST_DISTRIBUTION
-
-// Use http://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
+#define USE_FAST_RAND_AND_DISTRIBUTION
 
 #include <iostream>
 #include <fstream>
 #include <chrono>
 #include <algorithm>
 #include <numeric>
-
+#include <random>
 #include <vector>
 
 static int32_t LOOPCOUNT = 1000;
@@ -37,9 +34,7 @@ static std::ofstream s_csvFile;
                      cout << chrono::duration_cast<chrono::microseconds>(shortDuration).count() << "us\n"; \
                      s_csvFile << chrono::duration_cast<chrono::microseconds>(shortDuration).count() << ",";
 
-
-using namespace std;
-
+#ifdef USE_FAST_RAND_AND_DISTRIBUTION
 
 // Fast random from https://en.wikipedia.org/wiki/Xorshift
 static uint32_t s_rndState = 1234;
@@ -55,8 +50,21 @@ inline uint32_t XorShift32()
 
 inline uint32_t RandRange(uint32_t i_max)
 {
-  return XorShift32() % (i_max + 1); // i_max cannot be uint32 limit
+  return XorShift32() % (i_max + 1); // i_max cannot be uint32 limit (note that using % does not give an even distribution of ints)
 }
+
+#else // !USE_FAST_RAND_AND_DISTRIBUTION
+
+// Use http://en.cppreference.com/w/cpp/numeric/random/uniform_int_distribution
+static std::mt19937 s_gen(1234); //Standard mersenne_twister_engine seeded with 1234
+inline uint32_t RandRange(uint32_t i_max)
+{
+  std::uniform_int_distribution<uint32_t> dis(0, i_max);
+  return dis(s_gen); // Perhaps faster to use the same "dis" each time and pass the parameters for range?
+}
+
+#endif // !USE_FAST_RAND_AND_DISTRIBUTION
+
 
 ///////////////////////////////////////////////////////////////////////////////
 template<class T, class P>
