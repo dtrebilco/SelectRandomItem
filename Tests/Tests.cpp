@@ -3,36 +3,10 @@
 #define USE_FAST_RAND_AND_DISTRIBUTION
 
 #include <iostream>
-#include <fstream>
-#include <chrono>
 #include <algorithm>
 #include <numeric>
 #include <random>
 #include <vector>
-
-static int32_t LOOPCOUNT = 1000;
-static uint32_t TEST_LOOPCOUNT = 100;
-
-static std::ofstream s_csvFile;
-
-#define TIMER_START  std::chrono::microseconds shortDuration; \
-                     for (uint32_t t = 0; t < TEST_LOOPCOUNT; t++) \
-                     { \
-                       std::vector<T> process(LOOPCOUNT); \
-                       for (auto& i : process) \
-                       { \
-                         i = a_data; \
-                       } \
-                       auto start_time = chrono::high_resolution_clock::now();
-
-#define TIMER_END      auto duration_time = chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now() - start_time); \
-                       if (t == 0 || duration_time < shortDuration) \
-                       { \
-                         shortDuration = duration_time; \
-                       } \
-                     } \
-                     cout << chrono::duration_cast<chrono::microseconds>(shortDuration).count() << "us\n"; \
-                     s_csvFile << chrono::duration_cast<chrono::microseconds>(shortDuration).count() << ",";
 
 #ifdef USE_FAST_RAND_AND_DISTRIBUTION
 
@@ -117,7 +91,7 @@ bool RandomItemTempArray(const std::vector<T>& items, P test, T& returnItem)
   }
 
   // Select a random index
-  uint32_t matchIndex = RandRange(indices.size() - 1);
+  uint32_t matchIndex = RandRange((uint32_t)indices.size() - 1);
   returnItem = items[indices[matchIndex]];
 
   return true;
@@ -185,13 +159,41 @@ bool RandomItemSelect(const std::vector<T>& items, P test, T& returnItem)
   return matchingCount > 0;
 }
 
+
+#define PerformTest(test)                                                             \
+{                                                                                     \
+  std::string foundItem;                                                              \
+  std::cout << "Testing " << #test << "\n";                                           \
+  std::vector<uint32_t> totals(26);                                                   \
+  for (uint32_t i = 0; i < 10000; i++)                                                 \
+  {                                                                                   \
+    if (!test(testData, [](const std::string& i) { return i[0] == 'a'; }, foundItem)) \
+    {                                                                                 \
+      std::cout << "Unexpected not found!\n";                                         \
+    }                                                                                 \
+    else                                                                              \
+    {                                                                                 \
+      totals[foundItem[1] - 'a']++;                                                   \
+    }                                                                                 \
+  }                                                                                   \
+  std::cout << "Results: \n";                                                         \
+  for (uint32_t i = 0; i < 26; i++)                                                   \
+  {                                                                                   \
+    std::cout << "  " << (char)('a' + i) << " = " << totals[i] << "\n";               \
+  }                                                                                   \
+                                                                                      \
+  if (test(testData, [](const std::string& i) { return i[0] == 'A'; }, foundItem))    \
+  {                                                                                   \
+    std::cout << "Unexpected found A!\n";                                             \
+  }                                                                                   \
+}
+
+
 int main()
 {
-  s_csvFile.open("test_profile.csv");
-
   // Create a test array with random data
   std::vector<std::string> testData;
-  for (uint32_t i = 0; i < 10000; i++)
+  for (uint32_t i = 0; i < 100000; i++)
   {
     std::string newString;
     newString.append(1, 'a' + RandRange(25));
@@ -203,13 +205,11 @@ int main()
   }
 
   // Select from the array with the different methods
-  std::string foundItem;
-  RandomItemSelect(testData, [](const std::string& i) { return i[0] == 'a'; }, foundItem);
+  PerformTest(RandomItemDualIterate);
+  PerformTest(RandomItemTempArray);
+  PerformTest(RandomItemSelect);
+  PerformTest(RandomItemSortArray);
 
-
-  RandomItemSortArray(testData, [](const std::string& i) { return i[0] == 'a'; }, foundItem);
-
-  s_csvFile.close();
   return 0;
 }
 
