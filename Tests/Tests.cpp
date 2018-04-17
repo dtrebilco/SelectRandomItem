@@ -165,7 +165,7 @@ bool RandomItemSelect(const std::vector<T>& items, P test, T& returnItem)
   std::string foundItem;                                                              \
   std::cout << "Testing " << #test << "\n";                                           \
   std::vector<uint32_t> totals(26);                                                   \
-  for (uint32_t i = 0; i < 10000; i++)                                                 \
+  for (uint32_t i = 0; i < 10000; i++)                                                \
   {                                                                                   \
     if (!test(testData, [](const std::string& i) { return i[0] == 'a'; }, foundItem)) \
     {                                                                                 \
@@ -208,7 +208,7 @@ int main()
   PerformTest(RandomItemDualIterate);
   PerformTest(RandomItemTempArray);
   PerformTest(RandomItemSelect);
-  PerformTest(RandomItemSortArray);
+  PerformTest(RandomItemSortArray); // Done last as it re-orders the array
 
   return 0;
 }
