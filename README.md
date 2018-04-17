@@ -16,7 +16,7 @@ Item GetRandomItem(const std::vector<Item>& items)
 ```
 However, once you want to select a random item from a subset of an array (using a predicate) the problem gets more difficult.
 
-For example, in a game you spawn a random unit of a type that matches some conditions (eg level, health range, weapon etc).
+For example, in a game you want to spawn a random unit of a type that matches some conditions (eg level, health range, weapon etc).
 
 This is typically solved by one of three methods presented here. Following is a fourth method designed to overcome some limitations.
 
@@ -24,6 +24,37 @@ This is typically solved by one of three methods presented here. Following is a 
 
 By sorting the array using the predicate, you can then select a random item from the sub-part of the array.
 
+```c++
+template<class T, class P>
+bool RandomItemSortArray(std::vector<T>& items, P test, T& returnItem)
+{
+  // Put all the matching items at the end of the array
+  auto first = std::find_if(items.begin(), items.end(), test);
+  if (first != items.end())
+  {
+    for (auto i = first; ++i != items.end(); )
+    {
+      if (!test(*i))
+      {
+        std::swap(*first, *i);
+        *first++;
+      }
+    }
+  }
+    
+  auto itemCount = std::distance(first, items.end());
+  if (itemCount == 0)
+  {
+    return false;
+  }
+
+  // Select a random index
+  uint32_t matchIndex = RandRange((uint32_t)itemCount - 1);
+  returnItem = *(first + matchIndex);
+
+  return true;
+}
+```
 
 **Disadvantages**
  - Re-orders the array
@@ -33,6 +64,34 @@ By sorting the array using the predicate, you can then select a random item from
 ### 2) Temporary Array
 
 Copy all the items or item indices that match the predicate to a separate array, then select a random item from it.
+
+```c++
+template<class T, class P>
+bool RandomItemTempArray(const std::vector<T>& items, P test, T& returnItem)
+{
+  std::vector<uint32_t> indices;
+  for (uint32_t i = 0; i < items.size(); i++)
+  {
+    // If matching the test
+    if (test(items[i]))
+    {
+      indices.push_back(i);
+    }
+  }
+
+  if (indices.size() == 0)
+  {
+    return false;
+  }
+
+  // Select a random index
+  uint32_t matchIndex = RandRange((uint32_t)indices.size() - 1);
+  returnItem = items[indices[matchIndex]];
+
+  return true;
+}
+```
+
 
 **Disadvantages**
  - Typically allocates memory
@@ -45,6 +104,48 @@ Iterate the data getting a count of items that match the predicate. Then select 
 Then iterate the data again and stop when matching an item of the found index.
 
 In some cases these count values can be pre-processed offline if doing tests on constant data with known predicates.
+
+```c++
+template<class T, class P>
+bool RandomItemDualIterate(const std::vector<T>& items, P test, T& returnItem)
+{
+  uint32_t matchingCount = 0;
+  for (const T& i : items)
+  {
+    // If matching the test
+    if (test(i))
+    {
+      matchingCount++;
+    }
+  }
+
+  if (matchingCount == 0)
+  {
+    return false;
+  }
+
+  // Select a random index
+  uint32_t matchIndex = RandRange(matchingCount - 1);
+  matchingCount = 0;
+  for (const T& i : items)
+  {
+    // If matching the test
+    if (test(i))
+    {
+      // If matching the index
+      if (matchingCount == matchIndex)
+      {
+        returnItem = i;
+        break;
+      }
+      matchingCount++;
+    }
+  }
+
+  return true;
+}
+```
+
 
 **Disadvantages**
  - Touching data twice
@@ -60,21 +161,21 @@ This is done by getting a random number between 0 and previous found item count,
 This has the major advantages of working on temporal data and does not allocate memory.
 
 ```c++
-template<class P> 
-bool RandomSelect(const std::vector<Item>& items, P test, Item& returnItem)
+template<class T, class P>
+bool RandomItemSelect(const std::vector<T>& items, P test, T& returnItem)
 {
   uint32_t matchingCount = 0;
-  for (const Item& i : items)
+  for (const T& i : items)
   {
     // If matching the test
     if (test(i))
     {
       // Check if selected
-      matchingCount++;
-      if (rand() % matchingCount == 0)
+      if (RandRange(matchingCount) == 0)
       {
         returnItem = i;
       }
+      matchingCount++;
     }
   }
 
