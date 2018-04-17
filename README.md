@@ -99,9 +99,11 @@ bool RandomItemTempArray(const std::vector<T>& items, P test, T& returnItem)
 
 ### 3) Dual iterate
 
-Iterate the data getting a count of items that match the predicate. Then select an index based on this count. 
+Iterate the data getting a count of items that match the predicate.
 
-Then iterate the data again and stop when matching an item of the found index.
+Next, select an index based on this count. 
+
+Finally iterate the data again and stop when matching an item of the found index.
 
 In some cases these count values can be pre-processed offline if doing tests on constant data with known predicates.
 
