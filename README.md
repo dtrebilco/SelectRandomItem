@@ -1,5 +1,7 @@
 # Select Random Item
 
+The below algorithm uses Reservoir Sampling https://www.youtube.com/watch?v=A1iwzSew5QY
+
 ## Introduction
 
 Selecting a random item from a pre-defined array is typically done via randomly selecting an index based on the array size, then accessing the item at that index.
